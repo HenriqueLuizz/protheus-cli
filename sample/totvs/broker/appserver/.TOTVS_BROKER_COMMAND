@@ -1,0 +1,7 @@
+disable server 172.16.106.31:5001 
+disable server 172.16.106.31:5002 
+disable server 172.16.106.32:5001 
+disable server 172.16.106.32:5002 
+disable server 172.16.106.32:5003 
+disable server 172.16.106.32:5004 
+disable server 172.16.106.32:5005 
