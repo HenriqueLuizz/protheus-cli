@@ -9,11 +9,13 @@ def result_oci(d):
         if 'data' in o:
             name = o['data']['display-name']
             lifecycle = o['data']['lifecycle-state']
-            print(f'{name} - {lifecycle}')
+            print(f'Instância {name} - {lifecycle}')
+            common.log(f'Instância {name} - {lifecycle}', 'INFO')
             return True
 
     else:
         print('Falha ao realizar a conexão com o OCI \n' + d['result'])
+        common.log('Falha ao realizar a conexão com o OCI \n' + d['result'], 'ERROR')
         return False
 
 
@@ -26,12 +28,14 @@ def check_oci(iids:list):
             return True
         else:
             print('Falha ao realizar a conexão com o OCI \n' + data['result'])
+            common.log(f'Falha ao realizar a conexão com o OCI \n' + data['result'], 'ERROR')
             return False
         break
     
 
 def instancie_oci(iids:list, action='get'):
     print(f'OCI operation {action} running... ')
+    common.log(f'OCI operation {action} running... ','INFO')
     if action.lower() == 'start':
         
         for iid in iids:

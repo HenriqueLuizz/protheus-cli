@@ -23,8 +23,8 @@ setup(
         'Say Thanks!': 'https://saythanks.io/to/henriqueluiz_silva%40yahoo.com.br',
         'Source': 'https://github.com/HenriqueLuizz/protheus-cli',
     },
-        package_dir={'': 'src'},  # Optional
-        packages=find_packages(where='src'),
+        # package_dir={'': 'src'},  # Optional
+        packages=find_packages(),
         install_requires=['schedule~=0.6.0', 'click~=7.1.2'],
         classifiers=[
             "Programming Language :: Python :: 3",

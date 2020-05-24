@@ -1,5 +1,7 @@
-import json
 import os
+import sys
+import json
+from common import log
 
 """Classe de configuração do CLI INSPETOR PROTHEUS
 """
@@ -24,7 +26,7 @@ class Setup:
 
 
     def get_appserver_name(self):
-        return self.appserver_path
+        return self.appserver_name
 
 
     def set_appserver_name(self, name):
@@ -57,14 +59,29 @@ class Setup:
 
     def get_ini_conns(self):
         list_conn = []
-        with open(self.appserver_path + self.appserver_name, "r+") as ini:
-            file_ini = ini.read()
+        path = os.path.join(self.get_appserver_path(), self.get_appserver_name())
+        print(path)
+        try:
+            with open(path, "r+") as ini:
+                file_ini = ini.read()
+            
+                filtro = file_ini.splitlines()
+                for line_ini in filtro:
+                    if line_ini.startswith('REMOTE_SERVER') :
+                        temp = line_ini.split('=')
+                        list_conn.append(temp[1].strip().replace(" ",":"))
         
-            filtro = file_ini.splitlines()
-            for line_ini in filtro:
-                if line_ini.startswith('REMOTE_SERVER') :
-                    temp = line_ini.split('=')
-                    list_conn.append(temp[1].strip().replace(" ",":"))
+        except FileNotFoundError:
+            log('Erro ao tentar abrir o INI do BROKER, verifique as chaves APPSERVER_NAME e APPSERVER_PATH se estão corretas', 'ERROR')
+            print('Erro ao tentar abrir o INI do BROKER, verifique as chaves APPSERVER_NAME e APPSERVER_PATH se estão corretas')
+            sys.exit("Arquivo de configuração do Broker não foi localizado!")
+        except PermissionError:
+            log('Erro ao tentar abrir o INI do BROKER, permissão negada', 'ERROR')
+            print('Erro ao tentar abrir o INI do BROKER, permissão negada')
+        finally:
+            pass
+
+        
 
         return list_conn            
 
@@ -100,6 +117,9 @@ class Setup:
             'conns' : [],
             'alwaysup' : [],
             'alwaysdown' : [],
+            "rpo_name" : "",
+            "rpo_master" : "",
+            "rpo_slave": []
         }
         with open('settings.json') as json_file:
             conf = json.load(json_file)
@@ -129,10 +149,7 @@ class Setup:
 
     def sample_config(self):
         sample = {
-            "oci": [
-                "ocid1.instance.oc1.iad.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-                "ocid1.instance.oc1.iad.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-                ],
+            "oci": [],
             "appserver_name": "appserver.ini",
             "appserver_path": os.getcwd(),
             "upinstance": "00:00",
@@ -143,7 +160,11 @@ class Setup:
             "conns": [],
             "alwaysup": [],
             "alwaysdown": [],
-}
+            "rpo_name" : "",
+            "rpo_master" : "",
+            "rpo_slave": []
+            }
+
         with open('settings.json', 'w') as json_read:
             json.dump(sample, json_read,indent=4)
 

@@ -1,5 +1,6 @@
 import subprocess
 import sys
+from datetime import datetime
 
 def get_platform():
     platforms = {
@@ -34,3 +35,11 @@ def run(command:str):
         return {"status": False, "result" : data.stderr.decode()}
 
     return data
+
+def log(msg, status='INFO'):
+    now = datetime.now()
+    now = now.strftime('%d/%m/%Y %H:%M')
+
+    with open('protheus-cli.log', 'a+',encoding='utf-8') as log_file:
+        log_file.write(f'[{now}] [{status}] {msg}\n')
+

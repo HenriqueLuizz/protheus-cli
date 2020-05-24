@@ -58,7 +58,25 @@ class Cloud:
             conf = json.load(json_file)
             
             for iid in iids:
+                common.log(f'OCID {iid} adicionado.')
                 conf['oci'].append(iid)
+
+        with open('settings.json', 'w') as json_read:
+            json.dump(conf, json_read,indent=4)
+
+        return conf
+
+    def remove_ocid(self, iids):
+        conf = {}
+
+        with open('settings.json') as json_file:
+            conf = json.load(json_file)
+            
+            for iid in iids:
+                if iid in conf['oci']:
+                    while iid in conf['oci']:
+                        common.log(f'OCID {iid} removido.')
+                        conf['oci'].remove(iid)
 
         with open('settings.json', 'w') as json_read:
             json.dump(conf, json_read,indent=4)

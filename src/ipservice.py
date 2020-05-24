@@ -1,9 +1,11 @@
 import json
 import time
 import sys
+import os
 import click
 from string import Template
 from ipsetup import Setup
+from common import log
 
 class Service:
 
@@ -76,7 +78,9 @@ class Service:
 
     def enable_broker(self, setup: Setup):
         
-        print('Enable - ' + time.ctime())
+        print(f'Serivço está sendo habilitado agora')
+        log(f'Serivço está sendo habilitado agora','INFO')
+        
         self.broker('enable', setup)
         
         with open('.protheus', "w") as p_file:
@@ -84,7 +88,10 @@ class Service:
 
 
     def disable_broker(self, setup: Setup):
-        print('Disable - ' + time.ctime())
+        
+        print(f'Serivço está sendo desabilitado agora')
+        log(f'Serivço está sendo desabilitado agora','INFO')
+
         self.broker('disable', setup)
 
         with open('.protheus', "w") as p_file:
@@ -101,8 +108,13 @@ class Service:
         # Lista de Sempre desativo
         alwaysdown = setup.get_alwaysdown()
         # Status dos serviço atual Habilitado ou Desabilitado
-        with open('.protheus', "r") as p_file:
-            status = p_file.read()
+
+        status = 'none'
+        
+        if os.path.exists('.protheus'):
+            with open('.protheus', "r") as p_file:
+                status = p_file.read()
+            
 
         if len(allconns) > 0:
             click.secho('Serviços que estão sendo observado:', bold=True)

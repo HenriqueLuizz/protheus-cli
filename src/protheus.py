@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import click
 import pprint
@@ -8,11 +9,14 @@ from ipsetup import Setup
 from ipservice import Service
 from ipcloud import Cloud
 from ipsched import Scheduler
+from common import log
+from ipfiles import Files
 
 ipset = object.__new__(Setup)
 ipserv = object.__new__(Service)
 ipcl = object.__new__(Cloud)
 ipsch = object.__new__(Scheduler)
+ipfile = object.__new__(Files)
 
 ipset.load()
 ipsch.load()
@@ -47,11 +51,16 @@ def instance():
 def sched():
     pass
 
+@cli.group()
+def update():
+    pass
 
 # COMANDOS POR GRUPOS
 
 # GRUPO DE COMANDOS DO SETUP
-@setup.command()
+@setup.command('config', 
+                short_help='Configura o diretório do broker, lista de exceção', 
+                help="Configura o diretório do broker, lista de conexão de appserver slave que sempre fica ativo")
 def config():
 
     path = click.prompt('Informe o caminho absoluto do diretório do appserver Broker (/totvs/bin/broker_appserver)', type=click.Path())
@@ -122,22 +131,27 @@ def config():
     #     pass
 
 
-@setup.command()
+@setup.command('init', 
+                short_help='Inicializa ou zera o arquivo settings.json', 
+                help="Inicializa ou zer o arquivo settings.json que é responsável pelos parâmetros do PROTHEUS CLI")
 def init():
     appdir = os.getcwd()
     ipset.init_setup()
     click.echo(f'Arquivo de configuração settings.json foi criado em {appdir} .')
 
 
-@setup.command()
-def list():
+@setup.command('list',short_help='Lista os configurações do arquivo settings.json', help="Lista as configurações do arquivo settings.json")
+def list_setup():
     data_config = ipset.get_config()
     click.secho('Arquivo de configuração do Protheus CLI', bold=True)
     pprint.pprint(data_config, indent=4)
 
 
 # GRUPO DE COMANDOS DO SERVICE
-@service.command()
+@service.command('enable', 
+                short_help='Habilita os serviços no broker protheus', 
+                help="Cria o arquivo .TOTVS_BROKER_COMMAND como todas as conexões de appserver configurado no appserver.ini do broker, exceto as conexões listada na chave ALWAYSUP no SETTINGS.JSON. \n\nTemplate do conteudo do arquivo: enable server 127.0.0.1:1234", 
+                epilog='')
 def enable():
     
     click.echo('Habilitando serviços...')
@@ -147,7 +161,10 @@ def enable():
     ipserv.enable_broker(ipset)
 
 
-@service.command()
+@service.command('disable', 
+                short_help='Desabilita os serviços no broker protheus', 
+                help="Cria o arquivo .TOTVS_BROKER_COMMAND como todas as conexões de appserver configurado no appserver.ini do broker, exceto as conexões listada na chave ALWAYSDOWN no SETTINGS.JSON. \n\nTemplate do conteudo do arquivo: disable server 127.0.0.1:1234", 
+                epilog='')
 def disable():
     click.echo('Desabilitando serviços...')
 
@@ -157,17 +174,24 @@ def disable():
     ipserv.disable_broker(ipset)
 
 
-@service.command()
-def info():
-    click.echo('service info')
-
+@service.command('list', 
+                short_help='Lista todos os serviços no BROKER PROTHEUS', 
+                help="Lista todos os serviços configurados no APPSERVER.INI do broker e as listas de exceções ALWAYSUP e ALWAYSDOWN do SETTINGS.JSON.", 
+                epilog='')
+def list_service():
     ipserv.info(ipset)
 
 
 # GRUPO DE COMANDOS DO INSTANCE
-@instance.command()
-@click.option('--quiet',is_flag=True, default=False)
-def poweron(quiet):
+@instance.command('start',
+                short_help='Inicia todas as instâncias. \n\n--quiet (quiet mode)', 
+                help="Inicia todas as instâncias configuradas no SETTINGS.JSON, envia um sinal de START para cada instância", 
+                epilog='')
+@click.option('--quiet','-q',
+                is_flag=True, 
+                default=False, 
+                help='modo sem interação, o sinal de START será enviado sem solicitar confirmação')
+def start(quiet):
     
     clouds = ipcl.identifyCloud()
 
@@ -189,9 +213,15 @@ def poweron(quiet):
                     print(f'Sorry, {c.upper()} not yet supported!')
 
 
-@instance.command()
-@click.option('--quiet',is_flag=True, default=False)
-def poweroff(quiet):
+@instance.command('stop',
+                short_help='Desliga todas as instâncias. \n\n--quiet (quiet mode)', 
+                help="Desliga todas as instâncias configuradas no SETTINGS.JSON, envia um sinal de STOP para cada instância", 
+                epilog='')
+@click.option('--quiet','-q',
+                is_flag=True,
+                default=False,
+                help='modo sem interação, o sinal de STOP será enviado sem solicitar confirmação')
+def stop(quiet):
     
     clouds = ipcl.identifyCloud()
 
@@ -213,7 +243,10 @@ def poweroff(quiet):
                     print(f'Sorry, {c.upper()} not yet supported!')
 
 
-@instance.command()
+@instance.command('get',
+                short_help='Verifica o estado de todas instâncias', 
+                help="verifica o estado de todas as instâncias configuradas no SETTINGS.JSON", 
+                epilog='')
 def get():
     clouds = ipcl.identifyCloud()
 
@@ -223,10 +256,17 @@ def get():
         else:
             print(f'Sorry, {c.upper()} not yet supported!')
     
-
-@instance.command()
-def add():
+@instance.command('add',
+                short_help='Adiciona um novo ID de instância, \n\n--iid <ID> (silent mode)', 
+                help="Adiciona um novo ID de instância no SETTINGS.JSON \n\n protheus instance add \n\n protheus instance add --iid <ID> \n\n protheus instance add --iid <ID> --iid <ID> ...", 
+                epilog='')
+@click.option('--iid', multiple=True, help='ID da instância que será adicionado (silent mode)')
+def add(iid):
     clouds = ipcl.identifyCloud()
+
+    if len(iid) > 0:
+        ipcl.set_oci(list(iid))
+        return
 
     for c in clouds:
         if c == 'oci':
@@ -244,43 +284,157 @@ def add():
         else:
             print(f'Sorry, {c.upper()} not yet supported!')
 
+
+@instance.command('remove',
+                short_help='Remove um ID de instância, \n\n--iid <ID> (silent mode)', 
+                help="Remove um ID de instância no SETTINGS.JSON \n\n protheus instance remove \n\n protheus instance remove --iid <ID> \n\n protheus instance remove --iid <ID> --iid <ID> ...", 
+                epilog='')
+@click.option('--iid',multiple=True,help='ID da instância que será removida (mode silent)')
+def remove(iid):
+    clouds = ipcl.identifyCloud()
+    
+    if len(iid) > 0:
+        ipcl.remove_ocid(list(iid))
+        return
+
+    for c in clouds:
+        if c == 'oci':
+            iids = []
+
+            ocids = ipcl.get_oci()
+            if len(ocids) > 0:
+                for ocid in ipcl.get_oci():
+                    click.echo(f'OCID : {ocid}')
+            else:
+                click.echo('Não existe OCID para remove')
+                return
+
+            iid = click.prompt('Informe o OCID da instância ', type=str)
+            iids.append(iid)
+            
+            while click.confirm('Continuar remoovendo OCIDs?'):
+                iid = click.prompt('OCID ', type=str)
+                iids.append(iid)
+            
+            ipcl.remove_ocid(iids)
+        else:
+            print(f'Sorry, {c.upper()} not yet supported!')
+
 # GRUPO DE COMANDOS DO SCHEDULE
-@sched.command()
-def upservice():
+@sched.command('upservice',
+                short_help='Define um horário para o serviço ser habilitado no BROKER.', 
+                help="Define um horário para o serviço ser habilitado no BROKER. \n\n protheus sched upservice \n\n protheus sched upservice --hour <00:00>", 
+                epilog='')
+@click.option('--hour','-h',multiple=False,help='Definir horário, formato: 00:00 (mode silent)')
+def upservice(hour):
+    if hour is not None:
+        r = re.compile('[0-9][0-9]:[0-9][0-9]')
+        if r.match(hour) is not None:
+            print(f'Horário configurado {hour}')
+            ipsch.set_config('upservice',hour)
+            return
+
     hour = click.prompt('Qual horário os serviços seram habilitado?')
     ipsch.set_config('upservice',hour)
 
 
-@sched.command()
-def downservice():
+@sched.command('downservice',
+                short_help='Define um horário para o serviço ser desabilitado no BROKER.', 
+                help="Define um horário para o serviço ser desabilitado no BROKER. \n\n protheus sched downservice \n\n protheus sched downservice --hour <00:00> (silent mode)", 
+                epilog='')
+@click.option('--hour','-h',multiple=False,help='Definir horário, formato: 00:00 (mode silent)')
+def downservice(hour):
+    if hour is not None:
+        r = re.compile('[0-9][0-9]:[0-9][0-9]')
+        if r.match(hour) is not None:
+            print(f'Horário configurado {hour}')
+            ipsch.set_config('downservice',hour)
+            return
+
+
     hour = click.prompt('Qual horário os serviços seram desabilitado?')
     ipsch.set_config('downservice',hour)
 
 
-@sched.command()
-def turnon():
+@sched.command('upinstance',
+                short_help='Define um horário para a instância ser ligada.', 
+                help="Define um horário para a instância ser ligada. \n\n protheus sched upinstance \n\n protheus sched upinstance --hour <00:00> (silent mode)", 
+                epilog='')
+@click.option('--hour','-h',multiple=False,help='Definir horário, formato: 00:00 (mode silent)')
+def turnon(hour):
+
+    if hour is not None:
+        r = re.compile('[0-9][0-9]:[0-9][0-9]')
+        if r.match(hour) is not None:
+            print(f'Horário configurado {hour}')
+            ipsch.set_config('upinstance',hour)
+            return
+
     hour = click.prompt('Qual horário as instâncias seram habilitada?')
     ipsch.set_config('upinstance',hour)
 
+@sched.command('downinstance',
+                short_help='Define um horário para a instancia ser desligada', 
+                help="Define um horário para a instancia ser desligada. \n\n protheus sched downinstance \n\n protheus sched downinstance --hour <00:00> (silent mode)", 
+                epilog='')
+@click.option('--hour','-h',multiple=False,help='Definir horário, formato: 00:00 (mode silent)')
+def turnoff(hour):
+       
+    if hour is not None:
+        r = re.compile('[0-9][0-9]:[0-9][0-9]')
+        if r.match(hour) is not None:
+            print(f'Horário configurado {hour}')
+            ipsch.set_config('downinstance',hour)
+            return
 
-@sched.command()
-def turnoff():
     hour = click.prompt('Qual horário as instâncias seram desabilitada?')
     ipsch.set_config('downinstance',hour)
     
-
-@sched.command()
-def recorence():
+@sched.command('recorence',
+                short_help='Define a recorrencia das execuções, por padrão é daily', 
+                help="Define a recorrencia de ligar e desligar as instâncias e habilitar e desabilitar os serviços. \n\n protheus sched recorence \n\n protheus sched recorence --rec <daily|weeky> (silent mode)", 
+                epilog='')
+@click.option('--rec','-r',multiple=False,help='Definir recorrencia, formato: daily | weekly (mode silent)')
+def recorence(rec):
+    
+    if rec is not None:
+        if rec.lower() == 'daily' or re.lower() == 'weekly':
+            print(f'Recoorencia configurada {rec}')
+            ipsch.set_config('recorence',hour)
+            return
     rec = click.prompt('Qual será a recorencia?', show_choices=True, type=click.Choice(['daily','weekly']))
     ipsch.set_config('recorence',rec)
 
+@sched.command('list',
+                short_help='Lista as configurações do agendamento e os serviços alvo', 
+                help="Lista as configurações do agendamento de ligar e desligar as instâncias e habilitar e desabilitar os serviços.", 
+                epilog='')
+def list_sched():
+    ipsch.load()
+    
+    clouds = ipcl.identifyCloud()
 
-@sched.command()
-def check():
-    click.echo('schedule ckeck')
+    click.secho('Horários configurado: ', bold=True)
+    click.secho('')
+    click.secho(f'Instâncias {clouds[0].upper()}: ', bold=True)
+    click.secho('Ligar às ' + click.style(ipsch.get_upinstance(), bold=True), bold=False)
+    click.secho('Desligar às ' + click.style(ipsch.get_downinstance(), bold=True), bold=False)
+    click.secho('')
+    click.secho('Serviços Protheus: ', bold=True)
+    click.secho('Habilitar às ' + click.style(ipsch.get_upservice(), bold=True), bold=False)
+    click.secho('Desabilitar às ' + click.style(ipsch.get_downservice(), bold=True), bold=False)
+    click.secho('')
+    click.secho('Recorrencia : ' + click.style(ipsch.get_recorence(), bold=True), bold=True)
+    click.secho('')
+    click.secho('Appeservers alvo : ', bold=True)
+    ipserv.info(ipset)
+    
 
-
-@sched.command()
+    
+@sched.command('run',
+                short_help='Inicia o processo de agendamento', 
+                help="Inicia o processo de agendamento, ao executar este comando este console ficará exclusivo para o agendamento. \n\nPara iniciar este processo como serviço verifique a documentação.", 
+                epilog='')
 def run():
     click.echo('Thread do agendador iniciado!')
 
@@ -296,9 +450,35 @@ def run():
             time.sleep(1)
         except KeyboardInterrupt:
             print('Schedule aborted')
+            log('Agendamento abortado','WARN')
             break
 
 
+# GRUPO DE COMANDOS DO UPDATE
+@update.command('rpo',
+                short_help='Lista e atualiza os RPOs desatualizados do Protheus', 
+                help="Atualiza os artefatos do Protheus. \n\n protheus update rpo (lista os RPOs desatualizados)", 
+                epilog='')
+@click.option('--update', '-u',is_flag=True, default=False, help='Confirma automaticamente a atualização de todos os RPOs desatualizados')
+@click.option('--create','-c',is_flag=True, default=False, help='Confirma automaticamente a criação dos RPOs caso não seja encontrado no destino')
+@click.option('--force','-f',is_flag=True, default=False, help='Força copiar o RPO do MASTER (origem) para os SLAVES (destino), independente da data de modificação. É necessário passar --update ou -u, caso contrário só irá listar os arquivo que serão atulizados')
+def rpo(update, create, force):
+    data_config = ipset.get_config()
+
+    if data_config.get('rpo_name',False) and data_config.get('rpo_master',False) and data_config.get('rpo_slave',False):
+        ipfile.set_name(data_config['rpo_name'])
+        ipfile.set_path_master(data_config['rpo_master'])
+        ipfile.set_path_slv(data_config['rpo_slave'])
+    
+        ipfile.need_update(update, create, force)
+    else:
+        path = os.path.realpath('settings.json')
+        log(f'Configuração do RPO não localizado em {path}', 'ERROR')
+        print(f'Configuração do RPO não localizado em {path}')
+        print(f'Configure as chaves: \n"rpo_name" : "tttp120.rpo", \n"rpo_master" : "/totvs/protheus/apo/", \n"rpo_slave": ["/totvs/protheus_slv1/apo/", "/totvs/protheus_slv2/apo/"]')
+
+
+# SUBGRUPOS ADICIONADO AO GRUPO PRINCIPAL
 cli.add_command(setup)
 cli.add_command(service)
 cli.add_command(instance)
@@ -306,24 +486,27 @@ cli.add_command(sched)
 
 setup.add_command(config)
 setup.add_command(init)
-setup.add_command(list)
+setup.add_command(list_setup)
 
 service.add_command(enable)
 service.add_command(disable)
-service.add_command(info)
+service.add_command(list_service)
 
-instance.add_command(poweron)
-instance.add_command(poweroff)
+instance.add_command(start)
+instance.add_command(stop)
 instance.add_command(get)
 instance.add_command(add)
+instance.add_command(remove)
 
 sched.add_command(upservice)
 sched.add_command(downservice)
 sched.add_command(turnon)
 sched.add_command(turnoff)
 sched.add_command(recorence)
-sched.add_command(check)
+sched.add_command(list_sched)
 sched.add_command(run)
+
+update.add_command(rpo)
 
 if __name__ == "__main__":
     cli()
