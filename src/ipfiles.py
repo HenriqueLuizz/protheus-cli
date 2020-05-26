@@ -47,8 +47,7 @@ class Files:
       date_master = os.path.getmtime(path_master_full)
       
       log(f'Ultima modificação do {name} em {path_master} - '+ datetime.fromtimestamp(date_master).strftime('%d/%m/%Y %H:%M:%S'),'INFO')
-      print(f'Ultima modificação do {name} em {path_master} - '+ datetime.fromtimestamp(date_master).strftime('%d/%m/%Y %H:%M:%S'))
-
+      
       for slv in path_slv:
 
         if os.path.exists(os.path.join(slv, name)):
@@ -57,34 +56,28 @@ class Files:
           
           if date_slv < date_master or force:
             log(f'{name} desatualizado em {slv} - '+ datetime.fromtimestamp(date_slv).strftime('%d/%m/%Y %H:%M:%S'),'INFO')
-            print(f'{name} desatualizado em {slv} - '+ datetime.fromtimestamp(date_slv).strftime('%d/%m/%Y %H:%M:%S'))
             update_list.append(slv)
         else:
           log(f'O arquivo {name} não foi localizado em {slv}','WARN')
-          print(f'O arquivo {name} não foi localizado em {slv}')
           create_list.append(slv)      
 
       if auto_update:
         for update in update_list:
           log(f'O arquivo {name} está sendo atualizado em {update}','INFO')
-          print(f'O arquivo {name} está sendo atualizado em {update}')
           self.copy_file(path_master, update, name)
 
       if auto_create:
         for create in create_list:
           log(f'O arquivo {name} está sendo criado em {create}','INFO')
-          print(f'O arquivo {name} está sendo criado em {create}')
           self.copy_file(path_master, create, name)
       
       if len(update_list) == 0:
         log(f'Todos os {name} estão atulizado','INFO')
-        print(f'Todos os {name} estão atulizado')
-      
+        
       return update_list
     
     else:
-      log(f'Diretório invalido {path_master_full}',"WARN")
-      print(f'Diretório invalido {path_master_full}')
+      log(f'Diretório inválido {path_master_full}',"WARN")
 
 
   def it_exists(self, path):

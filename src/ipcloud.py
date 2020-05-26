@@ -1,12 +1,15 @@
 import json
-import common
-import ipoci
+import click
+from common import log
+from ipoci import Oci
+from ipbot import bot_protheus
+
+oci = object.__new__(Oci)
 
 class Cloud:
 
-
-    def __init__(self):
-        pass
+    def __init__(self,**kwargs):
+        self.instance = kwargs.get('instance',None)
 
 
     def identifyCloud(self):
@@ -16,39 +19,67 @@ class Cloud:
                 if cloud in data:
                     return [cloud]
 
-    def enable_instance(self):
+    def get_oci(self, **kwargs):
+        instance = -1
+        if 'instance' in kwargs: instance = kwargs.get('instance')
+        config = oci.get_config()
+        return config if instance < 0 else config[instance]
+                   
+
+    def change_state(self, **kwargs):
+        
         clouds = self.identifyCloud()
 
         for c in clouds:
             if c == 'oci':
-                self.oci('START')
+                self.oci(**kwargs)
             else:
-                print(f'Sorry, {c.upper()} not yet supported!')
+                log(f'Sorry, {c.upper()} not yet supported!')
+        
+        return
+
+    def oci(self,**kwargs):
+
+        job = kwargs.get('job',None)
+        ip = kwargs.get('ip')
+
+        configs = oci.get_config()
+        
+        for inst_conf in configs:
+            if ip in inst_conf['ip']:
+                iid = inst_conf.get('ocid', None)
+                
+                if iid is None:
+                    # exception
+                    log(f'OCID não configurado para o IP {ip}, por favor verificar as configurações no settings.json')
+                    return
+
+                if job == 'stopinstance':
+                    log(f'Iniciou o processo {job.upper()} do servidor {ip}')
+                    oci.instance_oci(iid,'STOP')
+                    return
+                elif job == 'startinstance':
+                    log(f'Iniciou o processo {job.upper()} do servidor {ip}')
+                    oci.instance_oci(iid,'START')
+                    return
+                else:
+                    log(f'Iniciou o processo {job.upper()} do servidor {ip}')
+                    oci.instance_oci(iid,'GET')
+                    return
+        log('ID não encontrado!')
+        return
 
 
-
-    def disable_instance(self):
-        clouds = self.identifyCloud()
-
-        for c in clouds:
-            if c == 'oci':
-                self.oci('STOP')
-            else:
-                print(f'Sorry, {c.upper()} not yet supported!')
-
-
-
-    def get_oci(self):
-        with open('settings.json') as json_file:
-            data = json.load(json_file)
-            if 'oci' in data:
-                return data['oci']
-            else:
-                return []
-
-
-    def oci(self, action):
-        ipoci.instancie_oci(self.get_oci(), action)
+######################################################################################################
+######################################################################################################
+######################################################################################################
+######################################################################################################
+######################################################################################################
+######################################################################################################
+######################################################################################################
+######################################################################################################
+######################################################################################################
+######################################################################################################
 
 
     def set_oci(self, iids):
@@ -58,13 +89,14 @@ class Cloud:
             conf = json.load(json_file)
             
             for iid in iids:
-                common.log(f'OCID {iid} adicionado.')
+                log(f'OCID {iid} adicionado.')
                 conf['oci'].append(iid)
 
         with open('settings.json', 'w') as json_read:
             json.dump(conf, json_read,indent=4)
 
         return conf
+
 
     def remove_ocid(self, iids):
         conf = {}
@@ -75,48 +107,11 @@ class Cloud:
             for iid in iids:
                 if iid in conf['oci']:
                     while iid in conf['oci']:
-                        common.log(f'OCID {iid} removido.')
+                        log(f'OCID {iid} removido.')
                         conf['oci'].remove(iid)
 
         with open('settings.json', 'w') as json_read:
             json.dump(conf, json_read,indent=4)
 
         return conf
-
-
-    # def get_totvs(self):
-    #     with open('settings.json') as json_file:
-    #         data = json.load(json_file)
-    #         if 'totvs' in data:
-    #             return data['totvs']
-    #         else:
-    #             return []
-
-
-    # def get_aws(self):
-    #     with open('settings.json') as json_file:
-    #         data = json.load(json_file)
-    #         if 'aws' in data:
-    #             return data['aws']
-    #         else:
-    #             return []
-
-
-    # def get_azure(self):
-    #     with open('settings.json') as json_file:
-    #         data = json.load(json_file)
-    #         if 'azure' in data:
-    #             return data['azure']
-    #         else:
-    #             return []
-
-    # def get_gcp(self):
-    #     with open('settings.json') as json_file:
-    #         data = json.load(json_file)
-    #         if 'gcp' in data:
-    #             return data['gcp']
-    #         else:
-    #             return []
-
-
 

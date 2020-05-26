@@ -73,15 +73,11 @@ class Setup:
         
         except FileNotFoundError:
             log('Erro ao tentar abrir o INI do BROKER, verifique as chaves APPSERVER_NAME e APPSERVER_PATH se estão corretas', 'ERROR')
-            print('Erro ao tentar abrir o INI do BROKER, verifique as chaves APPSERVER_NAME e APPSERVER_PATH se estão corretas')
             sys.exit("Arquivo de configuração do Broker não foi localizado!")
         except PermissionError:
             log('Erro ao tentar abrir o INI do BROKER, permissão negada', 'ERROR')
-            print('Erro ao tentar abrir o INI do BROKER, permissão negada')
         finally:
             pass
-
-        
 
         return list_conn            
 
@@ -103,7 +99,6 @@ class Setup:
 
         if not os.path.exists('settings.json'):
             self.sample_config()
-            
 
         with open('settings.json') as json_file:
             conf = json.load(json_file)
@@ -152,11 +147,11 @@ class Setup:
             "oci": [],
             "appserver_name": "appserver.ini",
             "appserver_path": os.getcwd(),
-            "upinstance": "00:00",
-            "downinstance": "00:00",
-            "upservice": "00:00",
-            "downservice": "00:00",
-            "recorence": "daily",
+            "startinstance": "00:00",
+            "stopinstance": "00:00",
+            "enableservice": "00:00",
+            "disableservice": "00:00",
+            "repeat": "daily",
             "conns": [],
             "alwaysup": [],
             "alwaysdown": [],

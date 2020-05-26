@@ -3,47 +3,59 @@ import time
 import schedule
 from ipservice import Service
 from ipcloud import Cloud
-from common import log
+from common import log, checkKey
+from ipbot import bot_protheus
 
 class Scheduler:
 
-    def __init__(self, upservice, downservice, upinstance, downinstance, recorence):
-        self.upservice = upservice
-        self.downservice = downservice
-        self.upinstance = upinstance
-        self.downinstance = downinstance
-        self.recorence = recorence
+    def __init__(self, enableservice, disableservice, startinstance, stopinstance, repeat):
+        self.enableservice = enableservice
+        self.disableservice = disableservice
+        self.startinstance = startinstance
+        self.stopinstance = stopinstance
+        self.repeat = repeat
+    
+
+    def weekdays(self, repeat=None):
+        if repeat == 'workingdays' or repeat == 'working-days' or repeat == 'diasuteis' or repeat == 'dias-uteis':
+            return ['monday','tuesday','wednesday','thursday','friday']
+        elif repeat in ['monday','tuesday','wednesday','thursday','friday','saturday','sunday']:
+            return repeat
+        elif repeat == 'daily' or repeat == 'diariamente':
+            return ['monday','tuesday','wednesday','thursday','friday','saturday','sunday']
+        else:
+            log('Configuração da chave inválida, valores válido <workingdays|daily|monday..sunday> ','ERROR')
+            return []
         
-        
-    def get_upservice(self):
-        return self.upservice
+    def get_enableservice(self):
+        return self.enableservice
 
-    def get_downservice(self):
-        return self.downservice
+    def get_disableservice(self):
+        return self.disableservice
 
-    def get_upinstance(self):
-        return self.upinstance
+    def get_startinstance(self):
+        return self.startinstance
     
-    def get_downinstance(self):
-        return self.downinstance
+    def get_stopinstance(self):
+        return self.stopinstance
 
-    def get_recorence(self):
-        return self.recorence
+    def get_repeat(self):
+        return self.repeat
 
-    def set_upservice(self, upservice):
-        self.upservice = upservice
+    def set_enableservice(self, enableservice):
+        self.enableservice = enableservice
 
-    def set_downservice(self, downservice):
-        self.downservice = downservice
+    def set_disableservice(self, disableservice):
+        self.disableservice = disableservice
 
-    def set_upinstance(self, upinstance):
-        self.upinstance = upinstance
+    def set_startinstance(self, startinstance):
+        self.startinstance = startinstance
     
-    def set_downinstance(self, downinstance):
-        self.downinstance = downinstance
+    def set_stopinstance(self, stopinstance):
+        self.stopinstance = stopinstance
     
-    def set_recorence(self, recorence):
-        self.recorence = recorence
+    def set_repeat(self, repeat):
+        self.repeat = repeat
 
     
     def get_config(self):
@@ -66,34 +78,47 @@ class Scheduler:
         log(f'Arquivo de configuração alterado | chave: {key} , valor: {value}')
         return conf
 
+
     def load(self):
         data = self.get_config()
-        self.upservice = data.get('upservice','')
-        self.downservice = data.get('downservice','')
-        self.upinstance = data.get('upinstance','')
-        self.downinstance = data.get('downinstance','')
-        self.recorence = data.get('recorence','')
+        self.enableservice = data.get('enableservice','')
+        self.disableservice = data.get('disableservice','')
+        self.startinstance = data.get('startinstance','')
+        self.stopinstance = data.get('stopinstance','')
+        self.repeat = data.get('repeat','')
 
-
-    def enable_service(self, serv:Service):
-        self.load()
-        print(f'Serivço programado para habilitar às {self.get_upservice()}')
-        log(f'Serivço programado para habilitar às {self.get_upservice()}')
-        schedule.every().day.at(self.get_upservice()).do(serv.enable_auto)
-
-    def disable_service(self, serv:Service):
-        self.load()
-        print(f'Serivço programado para desabilitar às {self.get_downservice()}')
-        log(f'Serivço programado para desabilitar às {self.get_downservice()}')
-        schedule.every().day.at(self.get_downservice()).do(serv.disable_auto)
     
-    def enable_instance(self, clo:Cloud):
-        print(f'Instância programada para ligar às {self.get_upinstance()}')
-        log(f'Instância programada para ligar às {self.get_upinstance()}')
-        schedule.every().day.at(self.get_upinstance()).do(clo.enable_instance)
+    def set_schedule(self, serv:Service, **kwargs):
 
-    def disable_instance(self, clo:Cloud):
-        print(f'Instância programada para desligar às {self.get_downinstance()}')
-        log(f'Instância programada para desligar às {self.get_downinstance()}')
-        schedule.every().day.at(self.get_downinstance()).do(clo.disable_instance)
+        global_time = False
+
+        kw_ip = kwargs.get('ip',None)
+        kw_name = kwargs.get('name',None)
+        kw_job = kwargs.get('job',None) # enableservice, disableservice, startinstance, stopinstance
+        kw_jobtime = kwargs.get('jobtime',None)
+        kw_repeat = kwargs.get('repeat',None)
+
+        if kw_jobtime is None:
+            global_time = True
+
+        hour = self.valid_hour(getattr(self,kw_job),kw_jobtime) # Compara o valor da variavel referente ao Job solicitado com o valor da variavel jobtime passada, retorna o valor da variavel jobtime se ela não for None, caso contrario retorna o valor da variavel do job geral
+        repeat = self.valid_repeat(self.get_repeat(),kw_repeat)
+        list_repeat = self.weekdays(repeat)
+
+        log(f'Agendamento de {kw_job.upper()} para o {kw_name.upper()} ({kw_ip}) às {hour}','INFO',True)
+        
+        if len(list_repeat) > 0:
+            for day in list_repeat:
+                getattr(schedule.every(),day).at(hour).do(serv.case_job, global_time=global_time, **kwargs)
+        
+
+    def valid_hour(self, hour_sched, hour):
+        if not hour is not None:
+            return hour_sched
+        return hour
+
+    def valid_repeat(self, repeat_sched, repeat):
+        if not repeat is not None:
+            return repeat_sched
+        return repeat
 

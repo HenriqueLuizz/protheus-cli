@@ -9,7 +9,7 @@ from ipsetup import Setup
 from ipservice import Service
 from ipcloud import Cloud
 from ipsched import Scheduler
-from common import log
+from common import log, checkKey
 from ipfiles import Files
 
 ipset = object.__new__(Setup)
@@ -23,14 +23,6 @@ ipsch.load()
 
 
 @click.group()
-# @click.option('-y', '--auto-confirm', 
-#             default=False, 
-#             is_flag=True, 
-#             required=False, 
-#             help='Habilita a confirmação automática.')
-# @click.option('-q', '--squiet', default=False, is_flag=True, help='Executa sem interação com o usuário.')
-# @click.option('-v', '--verbose', default=False, is_flag=True, help='Executa em modo verbose.')
-# @click.option('-s', '--silent', default=False, is_flag=True, help='Executa em modo silencioso.')
 def cli():
     pass
 
@@ -191,26 +183,30 @@ def list_service():
                 is_flag=True, 
                 default=False, 
                 help='modo sem interação, o sinal de START será enviado sem solicitar confirmação')
-def start(quiet):
-    
+def start(quiet):    
     clouds = ipcl.identifyCloud()
-
+    
     for c in clouds:
         if quiet:
 
-            click.echo(f'As instâncias da {c.upper()} serão paradas agora!')
+            click.echo(f'As instâncias da {c.upper()} serão iniciadas agora!')
             
             if c == 'oci':
-                ipcl.oci('START')
+                oci_config = ipcl.get_oci()
+                
+                for config in oci_config:
+                    ipcl.oci(ip=config.get('ip'),job='startinstance')
             else:
-                print(f'Sorry, {c.upper()} not yet supported!')
+                log(f'Sorry, {c.upper()} not yet supported!')
 
         else:
-            if click.confirm(f'Deseja desligar as instâncias da {c.upper()} agora?'):
+            if click.confirm(f'Deseja iniciar as instâncias da {c.upper()} agora?'):
                 if c == 'oci':
-                    ipcl.oci('START')
+                    oci_config = ipcl.get_oci()
+                    for config in oci_config:
+                        ipcl.oci(ip=config.get('ip'),job='startinstance')
                 else:
-                    print(f'Sorry, {c.upper()} not yet supported!')
+                    log(f'Sorry, {c.upper()} not yet supported!')
 
 
 @instance.command('stop',
@@ -231,16 +227,20 @@ def stop(quiet):
             click.echo(f'As instâncias da {c.upper()} serão paradas agora!')
             
             if c == 'oci':
-                ipcl.oci('STOP')
+                oci_config = ipcl.get_oci()
+                for config in oci_config:
+                    ipcl.oci(ip=config.get('ip'),job='stopinstance')
             else:
-                print(f'Sorry, {c.upper()} not yet supported!')
+                log(f'Sorry, {c.upper()} not yet supported!')
 
         else:
             if click.confirm(f'Deseja desligar as instâncias da {c.upper()} agora?'):
                 if c == 'oci':
-                    ipcl.oci('STOP')
+                    oci_config = ipcl.get_oci()
+                    for config in oci_config:
+                        ipcl.oci(ip=config.get('ip'),job='stopinstance')
                 else:
-                    print(f'Sorry, {c.upper()} not yet supported!')
+                    log(f'Sorry, {c.upper()} not yet supported!')
 
 
 @instance.command('get',
@@ -252,14 +252,16 @@ def get():
 
     for c in clouds:
         if c == 'oci':
-            ipcl.oci('GET')
+            oci_config = ipcl.get_oci()
+            for config in oci_config:
+                ipcl.oci(ip=config.get('ip'),job='')
         else:
-            print(f'Sorry, {c.upper()} not yet supported!')
+            log(f'Sorry, {c.upper()} not yet supported!')
     
 @instance.command('add',
                 short_help='Adiciona um novo ID de instância, \n\n--iid <ID> (silent mode)', 
                 help="Adiciona um novo ID de instância no SETTINGS.JSON \n\n protheus instance add \n\n protheus instance add --iid <ID> \n\n protheus instance add --iid <ID> --iid <ID> ...", 
-                epilog='')
+                epilog='', deprecated=True)
 @click.option('--iid', multiple=True, help='ID da instância que será adicionado (silent mode)')
 def add(iid):
     clouds = ipcl.identifyCloud()
@@ -282,13 +284,13 @@ def add(iid):
             ipcl.set_oci(iids)
 
         else:
-            print(f'Sorry, {c.upper()} not yet supported!')
+            log(f'Sorry, {c.upper()} not yet supported!')
 
 
 @instance.command('remove',
                 short_help='Remove um ID de instância, \n\n--iid <ID> (silent mode)', 
                 help="Remove um ID de instância no SETTINGS.JSON \n\n protheus instance remove \n\n protheus instance remove --iid <ID> \n\n protheus instance remove --iid <ID> --iid <ID> ...", 
-                epilog='')
+                epilog='',deprecated=True)
 @click.option('--iid',multiple=True,help='ID da instância que será removida (mode silent)')
 def remove(iid):
     clouds = ipcl.identifyCloud()
@@ -318,47 +320,47 @@ def remove(iid):
             
             ipcl.remove_ocid(iids)
         else:
-            print(f'Sorry, {c.upper()} not yet supported!')
+            log(f'Sorry, {c.upper()} not yet supported!')
 
 # GRUPO DE COMANDOS DO SCHEDULE
-@sched.command('upservice',
+@sched.command('enableservice',
                 short_help='Define um horário para o serviço ser habilitado no BROKER.', 
-                help="Define um horário para o serviço ser habilitado no BROKER. \n\n protheus sched upservice \n\n protheus sched upservice --hour <00:00>", 
+                help="Define um horário para o serviço ser habilitado no BROKER. \n\n protheus sched enableservice \n\n protheus sched enableservice --hour <00:00>", 
                 epilog='')
 @click.option('--hour','-h',multiple=False,help='Definir horário, formato: 00:00 (mode silent)')
-def upservice(hour):
+def enableservice(hour):
     if hour is not None:
         r = re.compile('[0-9][0-9]:[0-9][0-9]')
         if r.match(hour) is not None:
-            print(f'Horário configurado {hour}')
-            ipsch.set_config('upservice',hour)
+            log(f'Horário configurado {hour}')
+            ipsch.set_config('enableservice',hour)
             return
 
     hour = click.prompt('Qual horário os serviços seram habilitado?')
-    ipsch.set_config('upservice',hour)
+    ipsch.set_config('enableservice',hour)
 
 
-@sched.command('downservice',
+@sched.command('disableservice',
                 short_help='Define um horário para o serviço ser desabilitado no BROKER.', 
-                help="Define um horário para o serviço ser desabilitado no BROKER. \n\n protheus sched downservice \n\n protheus sched downservice --hour <00:00> (silent mode)", 
+                help="Define um horário para o serviço ser desabilitado no BROKER. \n\n protheus sched disableservice \n\n protheus sched disableservice --hour <00:00> (silent mode)", 
                 epilog='')
 @click.option('--hour','-h',multiple=False,help='Definir horário, formato: 00:00 (mode silent)')
-def downservice(hour):
+def disableservice(hour):
     if hour is not None:
         r = re.compile('[0-9][0-9]:[0-9][0-9]')
         if r.match(hour) is not None:
-            print(f'Horário configurado {hour}')
-            ipsch.set_config('downservice',hour)
+            log(f'Horário configurado {hour}')
+            ipsch.set_config('disableservice',hour)
             return
 
 
     hour = click.prompt('Qual horário os serviços seram desabilitado?')
-    ipsch.set_config('downservice',hour)
+    ipsch.set_config('disableservice',hour)
 
 
-@sched.command('upinstance',
+@sched.command('startinstance',
                 short_help='Define um horário para a instância ser ligada.', 
-                help="Define um horário para a instância ser ligada. \n\n protheus sched upinstance \n\n protheus sched upinstance --hour <00:00> (silent mode)", 
+                help="Define um horário para a instância ser ligada. \n\n protheus sched startinstance \n\n protheus sched startinstance --hour <00:00> (silent mode)", 
                 epilog='')
 @click.option('--hour','-h',multiple=False,help='Definir horário, formato: 00:00 (mode silent)')
 def turnon(hour):
@@ -366,16 +368,16 @@ def turnon(hour):
     if hour is not None:
         r = re.compile('[0-9][0-9]:[0-9][0-9]')
         if r.match(hour) is not None:
-            print(f'Horário configurado {hour}')
-            ipsch.set_config('upinstance',hour)
+            log(f'Horário configurado {hour}')
+            ipsch.set_config('startinstance',hour)
             return
 
     hour = click.prompt('Qual horário as instâncias seram habilitada?')
-    ipsch.set_config('upinstance',hour)
+    ipsch.set_config('startinstance',hour)
 
-@sched.command('downinstance',
-                short_help='Define um horário para a instancia ser desligada', 
-                help="Define um horário para a instancia ser desligada. \n\n protheus sched downinstance \n\n protheus sched downinstance --hour <00:00> (silent mode)", 
+@sched.command('stopinstance',
+                short_help='Define um horário para a instancia ser desligada',
+                help="Define um horário para a instancia ser desligada. \n\n protheus sched stopinstance \n\n protheus sched stopinstance --hour <00:00> (silent mode)", 
                 epilog='')
 @click.option('--hour','-h',multiple=False,help='Definir horário, formato: 00:00 (mode silent)')
 def turnoff(hour):
@@ -383,27 +385,27 @@ def turnoff(hour):
     if hour is not None:
         r = re.compile('[0-9][0-9]:[0-9][0-9]')
         if r.match(hour) is not None:
-            print(f'Horário configurado {hour}')
-            ipsch.set_config('downinstance',hour)
+            log(f'Horário configurado {hour}')
+            ipsch.set_config('stopinstance',hour)
             return
 
     hour = click.prompt('Qual horário as instâncias seram desabilitada?')
-    ipsch.set_config('downinstance',hour)
+    ipsch.set_config('stopinstance',hour)
     
-@sched.command('recorence',
+@sched.command('repeat',
                 short_help='Define a recorrencia das execuções, por padrão é daily', 
-                help="Define a recorrencia de ligar e desligar as instâncias e habilitar e desabilitar os serviços. \n\n protheus sched recorence \n\n protheus sched recorence --rec <daily|weeky> (silent mode)", 
+                help="Define a recorrencia de ligar e desligar as instâncias e habilitar e desabilitar os serviços. \n\n protheus sched repeat \n\n protheus sched repeat --rec <daily|weeky> (silent mode)", 
                 epilog='')
 @click.option('--rec','-r',multiple=False,help='Definir recorrencia, formato: daily | weekly (mode silent)')
-def recorence(rec):
+def repeat(rec):
     
     if rec is not None:
-        if rec.lower() == 'daily' or re.lower() == 'weekly':
-            print(f'Recoorencia configurada {rec}')
-            ipsch.set_config('recorence',hour)
+        if rec.lower() == 'daily' or rec.lower() == 'weekly':
+            log(f'Recorrência configurada {rec}')
+            ipsch.set_config('repeat',rec)
             return
-    rec = click.prompt('Qual será a recorencia?', show_choices=True, type=click.Choice(['daily','weekly']))
-    ipsch.set_config('recorence',rec)
+    rec = click.prompt('Qual será a recorrência?', show_choices=True, type=click.Choice(['daily','workingdays']))
+    ipsch.set_config('repeat',rec)
 
 @sched.command('list',
                 short_help='Lista as configurações do agendamento e os serviços alvo', 
@@ -417,14 +419,14 @@ def list_sched():
     click.secho('Horários configurado: ', bold=True)
     click.secho('')
     click.secho(f'Instâncias {clouds[0].upper()}: ', bold=True)
-    click.secho('Ligar às ' + click.style(ipsch.get_upinstance(), bold=True), bold=False)
-    click.secho('Desligar às ' + click.style(ipsch.get_downinstance(), bold=True), bold=False)
+    click.secho('Ligar às ' + click.style(ipsch.get_startinstance(), bold=True), bold=False)
+    click.secho('Desligar às ' + click.style(ipsch.get_stopinstance(), bold=True), bold=False)
     click.secho('')
     click.secho('Serviços Protheus: ', bold=True)
-    click.secho('Habilitar às ' + click.style(ipsch.get_upservice(), bold=True), bold=False)
-    click.secho('Desabilitar às ' + click.style(ipsch.get_downservice(), bold=True), bold=False)
+    click.secho('Habilitar às ' + click.style(ipsch.get_enableservice(), bold=True), bold=False)
+    click.secho('Desabilitar às ' + click.style(ipsch.get_disableservice(), bold=True), bold=False)
     click.secho('')
-    click.secho('Recorrencia : ' + click.style(ipsch.get_recorence(), bold=True), bold=True)
+    click.secho('Recorrencia : ' + click.style(ipsch.get_repeat(), bold=True), bold=True)
     click.secho('')
     click.secho('Appeservers alvo : ', bold=True)
     ipserv.info(ipset)
@@ -435,22 +437,43 @@ def list_sched():
                 short_help='Inicia o processo de agendamento', 
                 help="Inicia o processo de agendamento, ao executar este comando este console ficará exclusivo para o agendamento. \n\nPara iniciar este processo como serviço verifique a documentação.", 
                 epilog='')
-def run():
+@click.option('--instance/--by_instance', is_flag=True, required=False, default=False, help='Executa os agendamentos de todas as instancias (mode silent)')
+# @click.option('--instance','-i', required=False, help='Executa os agendamentos de todas as instancias (mode silent)')
+def run(**kwargs):
+
+    if 'all_instance' in kwargs:
+        all_instance = kwargs.get('all_instance')
+        by_instance = kwargs.get('by_instance')
+
+    if 'by_instance' in kwargs:
+        by_instance = kwargs.get('by_instance')
+
     click.echo('Thread do agendador iniciado!')
 
-    ipsch.enable_service(ipserv)
-    ipsch.disable_service(ipserv)
-
-    ipsch.enable_instance(ipcl)
-    ipsch.disable_instance(ipcl)
+    # TO DO : Executar uma verificação na cloud e validar as configurações
+    
+    oci_list = ipcl.get_oci()
+    # jobs = ['enableservice']
+    jobs = ['enableservice', 'disableservice', 'startinstance', 'stopinstance']
+    
+    for job in jobs:
+        
+        for i in range(len(oci_list)):
+            oci_jobtime = oci_list[i].get(job,None)
+            oci_repeat = oci_list[i].get('repeat',None)
+            oci_ip = oci_list[i].get('ip',None)
+            oci_name = oci_list[i].get('name',None)
+        
+            ipsch.set_schedule(ipserv,ip=oci_ip, name=oci_name, job=job, jobtime=oci_jobtime, repeat=oci_repeat)
 
     while True:
         try:
             schedule.run_pending()
             time.sleep(1)
         except KeyboardInterrupt:
-            print('Schedule aborted')
-            log('Agendamento abortado','WARN')
+            log('Agendamento abortado pelo usuário!','WARN')
+        except:
+            log('Processo do agendamento foi interrompido inesperadamente!','WARN')
             break
 
 
@@ -474,8 +497,7 @@ def rpo(update, create, force):
     else:
         path = os.path.realpath('settings.json')
         log(f'Configuração do RPO não localizado em {path}', 'ERROR')
-        print(f'Configuração do RPO não localizado em {path}')
-        print(f'Configure as chaves: \n"rpo_name" : "tttp120.rpo", \n"rpo_master" : "/totvs/protheus/apo/", \n"rpo_slave": ["/totvs/protheus_slv1/apo/", "/totvs/protheus_slv2/apo/"]')
+        log(f'Configure as chaves: \n"rpo_name" : "tttp120.rpo", \n"rpo_master" : "/totvs/protheus/apo/", \n"rpo_slave": ["/totvs/protheus_slv1/apo/", "/totvs/protheus_slv2/apo/"]')
 
 
 # SUBGRUPOS ADICIONADO AO GRUPO PRINCIPAL
@@ -495,14 +517,14 @@ service.add_command(list_service)
 instance.add_command(start)
 instance.add_command(stop)
 instance.add_command(get)
-instance.add_command(add)
-instance.add_command(remove)
+# instance.add_command(add)
+# instance.add_command(remove)
 
-sched.add_command(upservice)
-sched.add_command(downservice)
+sched.add_command(enableservice)
+sched.add_command(disableservice)
 sched.add_command(turnon)
 sched.add_command(turnoff)
-sched.add_command(recorence)
+sched.add_command(repeat)
 sched.add_command(list_sched)
 sched.add_command(run)
 

@@ -32,11 +32,11 @@ protheus instance remove    # Remove uma instância
 ## PROTHEUS SCHED
 
 ```sh
-protheus sched upservice    # Define um horário para habilitar os serviços
-protheus sched downservice  # Deifine um horário para desativar os serviços
-protheus sched upinstance   # Define um horário para habilitar as instâncias
-protheus sched downinstance # Define um horário para desativar os instâncias
-protheus sched recorence    # Define a recorrencia do agendamento
+protheus sched enableservice    # Define um horário para habilitar os serviços
+protheus sched disableservice  # Deifine um horário para desativar os serviços
+protheus sched startinstance   # Define um horário para habilitar as instâncias
+protheus sched stopinstance # Define um horário para desativar os instâncias
+protheus sched repeat    # Define a recorrência do agendamento
 protheus sched list         # Lista as configurações do agendamento
 protheus sched run          # Inicia o processo de monitoramento das tarefas
 ```

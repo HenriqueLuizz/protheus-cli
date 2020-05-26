@@ -1,6 +1,8 @@
-import subprocess
 import sys
+import json
+import subprocess
 from datetime import datetime
+from ipbot import bot_protheus
 
 def get_platform():
     platforms = {
@@ -22,24 +24,39 @@ def checkKey(d, k):
     else:
         return False
 
+
 def run(command:str):
     data = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-    # print(data.args)
-    # print(data.returncode)
     
     if data.returncode == 0:
-        # print(data.stdout.decode())
         return {"status": True, "result" : data.stdout.decode()}
     else:
-        # print(data.stderr.decode())
         return {"status": False, "result" : data.stderr.decode()}
 
     return data
 
-def log(msg, status='INFO'):
+
+def log(msg, status='INFO',send=False):
     now = datetime.now()
     now = now.strftime('%d/%m/%Y %H:%M')
+
+    print(f'[{now}] [{status}] {msg}')
 
     with open('protheus-cli.log', 'a+',encoding='utf-8') as log_file:
         log_file.write(f'[{now}] [{status}] {msg}\n')
 
+    if status != 'INFO':
+        bot_protheus('Algo estranho está acontecendo lá no servidor. Olha isso!')
+        bot_protheus(msg)
+
+    if send:
+        bot_protheus(msg)
+
+
+def get_settings(key):
+        with open('settings.json') as json_file:
+            data = json.load(json_file)
+            if key in data:
+                return [True, data[key]]
+            else:
+                return [False]
