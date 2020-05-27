@@ -46,7 +46,7 @@ def bot_protheus(bot_message):
 
 
 def bot_get_group_id():
-  bot_token = '1060967586:AAFeFcqD0SSks6gPF2TnCzagiQ-DK907Ocg'
+  bot_token = ''
 
   get_groups = f'https://api.telegram.org/bot{bot_token}/getUpdates'
   
