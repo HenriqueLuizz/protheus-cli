@@ -66,7 +66,7 @@ class Oci:
             if 'data' in o:
                 name = o['data']['display-name']
                 lifecycle = o['data']['lifecycle-state']
-                log(f'Instância {name} - {lifecycle}', 'INFO')
+                log(f'Instância {name} - {lifecycle}', 'INFO',True)
                 
                 if send_msg and action.lower() != 'get':
                     bot_protheus(f'Opa.. tudo bem!? \nAcabei de dar um ** {action.upper()} ** nas instâncias ** {name} ** da OCI. \n\nAgora ela está ** {lifecycle} **!!')
@@ -95,6 +95,7 @@ class Oci:
         log(f'OCI operation {action} running.','INFO')  
         
         if action.lower() == 'start':
+            
             data = run(f'oci compute instance action --instance-id {iid} --action START')
             self.result_oci(data,True,action)
         elif action.lower() == 'stop':

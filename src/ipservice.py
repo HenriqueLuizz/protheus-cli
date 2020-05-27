@@ -70,6 +70,8 @@ class Service:
     
     def totvs_broker_command(self, **kwargs):
         job = kwargs.get('job',None)
+        name = kwargs.get('name',None)
+        ip = kwargs.get('ip',None)
 
         self.load()
         if not self.appserver_path.endswith('/') and not self.appserver_path.endswith('\\'):
@@ -90,7 +92,7 @@ class Service:
                 with open('.protheus', "w") as p_file:
                     p_file.write('enabled')
 
-                log(f'Os serviços estão sendo habilitados agora no Broker Protheus.','INFO')
+                log(f'Os serviços do servidor {name.upper()} ({ip}) estão sendo habilitados agora no Broker Protheus.','INFO',True)
 
             elif job == 'disableservice':
                 """Cria o arquivo disable no diretório do appserver."""
@@ -100,7 +102,7 @@ class Service:
                 with open('.protheus', "w") as p_file:
                     p_file.write('disabled')
 
-                log(f'Os serviços estão sendo habilitados agora no Broker Protheus.','INFO')
+                log(f'Os serviços do servidor {name.upper()} ({ip}) estão sendo desabilitado agora no Broker Protheus.','INFO',True)
 
             else:
                 """Opção invalida"""

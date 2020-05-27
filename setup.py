@@ -9,7 +9,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
         name='protheus',
-        version='0.0.1',
+        version='0.0.3',
         # scripts=['protheus'],
         author='Henrique Luiz',
         author_email='henrique.luiz@totvs.com.br',

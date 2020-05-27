@@ -51,22 +51,22 @@ class Cloud:
                 
                 if iid is None:
                     # exception
-                    log(f'OCID não configurado para o IP {ip}, por favor verificar as configurações no settings.json')
+                    log(f'OCID não configurado para o IP {ip}, por favor verificar as configurações no settings.json','ERROR')
                     return
 
                 if job == 'stopinstance':
-                    log(f'Iniciou o processo {job.upper()} do servidor {ip}')
+                    log(f'Iniciou o processo {job.upper()} do servidor {ip}','INFO',True)
                     oci.instance_oci(iid,'STOP')
                     return
                 elif job == 'startinstance':
-                    log(f'Iniciou o processo {job.upper()} do servidor {ip}')
+                    log(f'Iniciou o processo {job.upper()} do servidor {ip}','INFO',True)
                     oci.instance_oci(iid,'START')
                     return
                 else:
-                    log(f'Iniciou o processo {job.upper()} do servidor {ip}')
+                    log(f'Iniciou o processo {job.upper()} do servidor {ip}','INFO')
                     oci.instance_oci(iid,'GET')
                     return
-        log('ID não encontrado!')
+        log('ID da instânce não encontrado!','WARN')
         return
 
 

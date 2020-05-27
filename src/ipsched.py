@@ -105,7 +105,7 @@ class Scheduler:
         repeat = self.valid_repeat(self.get_repeat(),kw_repeat)
         list_repeat = self.weekdays(repeat)
 
-        log(f'Agendamento de {kw_job.upper()} para o {kw_name.upper()} ({kw_ip}) às {hour}','INFO',True)
+        log(f'Agendamento de {kw_job.upper()} para o {kw_name.upper()} ({kw_ip}) às {hour} | {repeat} ','INFO',True)
         
         if len(list_repeat) > 0:
             for day in list_repeat:

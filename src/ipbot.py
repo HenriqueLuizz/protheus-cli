@@ -1,7 +1,6 @@
 import requests
 import pprint
-import json
-from common import log
+import json 
 
 def get_settings(key):
         with open('settings.json') as json_file:

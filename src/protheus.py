@@ -472,6 +472,7 @@ def run(**kwargs):
             time.sleep(1)
         except KeyboardInterrupt:
             log('Agendamento abortado pelo usuário!','WARN')
+            break
         except:
             log('Processo do agendamento foi interrompido inesperadamente!','WARN')
             break
