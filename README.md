@@ -4,6 +4,15 @@ Gerenciador de ambiente Protheus on-premise e cloud
 
 Inspetor Protheus CLI é um gerenciador e agendador de tarefas para os serviços do Protheus.
 
+
+O warmup foi construido com os recursos e bibliotecas disponíveis da linguagem Python, devido a facilidade de
+manipulação em multplataformas e a compatibilidade entre bibliotecas externas, como sistemas de mensageria e assistentes virtuais.
+
+A plicação hoje realiza o agendamento de iniciar e parar instancias (servidores em cloud) e habilitar e desabilitar serviços do Protheus com o Broker e encaminha todas as notificações atraves de um bot no Telegram. 
+
+Por enquanto o warmup suporta apenas uma nuvem publica, mas vamos continuar evoluindo o projeto para suportar todas as nuvem e com isso vamos conseguir gerar blueprint da infra estrutura do cliente com auxilio do Terraform e Anseble que facilitará a migração de arquitetura entre nuvens e também o escalamento automático onde o bot irá fazer o deploy de uma instancia quando houver a necessidade.
+
+
 ## PROTHEUS SETUP
 
 ```sh
