@@ -1,0 +1,16 @@
+[
+    {
+        "uid": "ecf220a0-25c3-4210-946a-26a14e7971e7",
+        "updateDate": "2020-06-02T19:08:14.0Z",
+        "titleText": "Status do servidor Máster",
+        "mainText": "O consumo de memória do servidor máster está em 70.6 por cento e o consumo de cpu está em 7 por cento.",
+        "redirectionUrl": "https://www.amazon.com"
+    },
+    {
+        "uid": "20ff3ef1-72b7-44bb-b4be-944a47d3w82c",
+        "updateDate": "2020-06-02T13:00:00.0Z",
+        "titleText": "Novidades em breve",
+        "mainText": "Ainda estou aprendendo essas coisas de sysadmin, logo logo vou lhe dar mais detalhes do seu ambiente. Até logo!",
+        "redirectionUrl": "https://www.amazon.com"
+    }
+]

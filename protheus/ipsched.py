@@ -21,7 +21,7 @@ class Scheduler:
             return ['monday','tuesday','wednesday','thursday','friday']
         elif repeat in ['monday','tuesday','wednesday','thursday','friday','saturday','sunday']:
             return repeat
-        elif repeat == 'daily' or repeat == 'diariamente':
+        elif repeat == 'daily' or repeat == 'diariamente': 
             return ['monday','tuesday','wednesday','thursday','friday','saturday','sunday']
         else:
             log('Configuração da chave inválida, valores válido <workingdays|daily|monday..sunday> ','ERROR')
