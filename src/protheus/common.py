@@ -4,20 +4,21 @@ import subprocess
 from datetime import datetime
 from ipbot import bot_protheus
 
+
 def get_platform():
     platforms = {
-        'linux1' : 'Linux',
-        'linux2' : 'Linux',
-        'darwin' : 'OS X',
-        'win32' : 'Windows'
+        'linux1': 'Linux',
+        'linux2': 'Linux',
+        'darwin': 'OS X',
+        'win32': 'Windows'
     }
-    
+
     if sys.platform not in platforms:
         return sys.platform
-    
+
     return platforms[sys.platform]
 
-    
+
 def checkKey(d, k):
     if k in d:
         return True
@@ -25,24 +26,24 @@ def checkKey(d, k):
         return False
 
 
-def run(command:str):
+def run(command: str):
     data = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-    
+
     if data.returncode == 0:
-        return {"status": True, "result" : data.stdout.decode()}
+        return {"status": True, "result": data.stdout.decode()}
     else:
-        return {"status": False, "result" : data.stderr.decode()}
+        return {"status": False, "result": data.stderr.decode()}
 
     return data
 
 
-def log(msg, status='INFO',send=False):
+def log(msg, status='INFO', send=False):
     now = datetime.now()
     now = now.strftime('%d/%m/%Y %H:%M')
 
     print(f'[{now}] [{status}] {msg}')
 
-    with open('protheus-cli.log', 'a+',encoding='utf-8') as log_file:
+    with open('protheus-cli.log', 'a+', encoding='utf-8') as log_file:
         log_file.write(f'[{now}] [{status}] {msg}\n')
 
     if status != 'INFO':
@@ -54,9 +55,9 @@ def log(msg, status='INFO',send=False):
 
 
 def get_settings(key):
-        with open('settings.json') as json_file:
-            data = json.load(json_file)
-            if key in data:
-                return [True, data[key]]
-            else:
-                return [False]
+    with open('settings.json') as json_file:
+        data = json.load(json_file)
+        if key in data:
+            return [True, data[key]]
+        else:
+            return [False]
