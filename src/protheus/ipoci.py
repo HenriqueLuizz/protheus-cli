@@ -96,12 +96,12 @@ class Oci:
 
         if action.lower() == 'start':
 
-            data = run(f'oci compute instance action --instance-id {iid} --action START')
+            data = run(f'oci compute instance action --instance-id {iid} --action START --wait-for-state RUNNING')
             self.result_oci(data, True, action)
 
         elif action.lower() == 'stop':
 
-            data = run(f'oci compute instance action --instance-id {iid} --action STOP')
+            data = run(f'oci compute instance action --instance-id {iid} --action SOFTSTOP --wait-for-state STOPPED')
             self.result_oci(data, True, action)
         else:
             data = run(f'oci compute instance get --instance-id {iid}')
