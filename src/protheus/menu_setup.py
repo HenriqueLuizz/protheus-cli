@@ -140,7 +140,22 @@ class Setup:
             "alwaysdown": [],
             "rpo_name": "",
             "rpo_master": "",
-            "rpo_slave": []}
+            "rpo_slave": [],
+            "bot": {
+                "bot_token": "",
+                "bot_chatid": ""}}
 
         with open('settings.json', 'w') as json_read:
             json.dump(sample, json_read, indent=4)
+
+    def set_bot(self, key, value) -> dict:
+        conf: dict = {}
+
+        with open('settings.json') as json_file:
+            conf = json.load(json_file)
+            conf['bot'].update(dict({key: value}))
+
+        with open('settings.json', 'w') as json_read:
+            json.dump(conf, json_read, indent=4)
+
+        return conf

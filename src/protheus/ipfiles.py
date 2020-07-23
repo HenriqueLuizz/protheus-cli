@@ -13,11 +13,11 @@ class Files:
         self.path_master = path_master
         self.path_slv = path_slv
 
-        def get_name(self):
-            return self.name
+    def get_name(self):
+        return self.name
 
-        def get_path_master(self):
-            return self.path_master
+    def get_path_master(self):
+        return self.path_master
 
     def get_path_slv(self):
         return self.path_slv

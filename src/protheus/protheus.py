@@ -12,6 +12,7 @@ from menu_cloud import Cloud
 from menu_sched import Scheduler
 from common import log
 from ipfiles import Files
+from ipbot import get_group_id
 
 ipset = object.__new__(Setup)
 ipserv = object.__new__(Service)
@@ -142,6 +143,20 @@ def list_setup():
     pprint.pprint(data_config, indent=4)
 
 
+@setup.command('bot', short_help='Inicializa ou zera o arquivo settings.json', help="Inicializa ou zer o arquivo settings.json que é responsável pelos parâmetros do PROTHEUS CLI")
+def bot():
+    # appdir=os.getcwd()
+
+    groups = get_group_id()
+
+    print('| INDEX | NOME DO CHAT | ID DO CHAT | TIPO DO CHAT |')
+    for num, group in enumerate(groups):
+        print(f'| {num} | {group["chat_name"]} | {group["id_chat"]} | {group["tipo"]} |')
+
+    # ipset.set_bot()
+    # click.echo(f'Arquivo de configuração settings.json foi criado em {appdir} .')
+
+
 # GRUPO DE COMANDOS DO SERVICE
 @service.command('enable', short_help='Habilita os serviços no broker protheus', help="Cria o arquivo .TOTVS_BROKER_COMMAND como todas as conexões de appserver configurado no appserver.ini do broker, exceto as conexões listada na chave ALWAYSUP no SETTINGS.JSON. \n\nTemplate do conteudo do arquivo: enable server 127.0.0.1:1234", epilog='')
 def enable():
@@ -150,7 +165,7 @@ def enable():
     # Atualiza a lista de IP com a lista do appserver.ini
     ipset.updata_conns()
 
-    ipserv.enable_broker(ipset)
+    # ipserv.enable_broker(ipset)
     # ipserv.case_job(ipserv, ip=oci_ip, name=oci_name, job=job, jobtime=oci_jobtime, repeat=oci_repeat)
 
 
@@ -458,6 +473,8 @@ def rpo(update, create, force):
         log(f'Configuração do RPO não localizado em {path}', 'ERROR')
         log('Configure as chaves: \n"rpo_name" : "tttp120.rpo", \n"rpo_master" : "/totvs/protheus/apo/", \n"rpo_slave": ["/totvs/protheus_slv1/apo/", "/totvs/protheus_slv2/apo/"]')
 
+
+# TODO Codigo em C que retorna os itens do menu e manda uma validação para o servidor da TOTVS.
 
 # SUBGRUPOS ADICIONADO AO GRUPO PRINCIPAL
 cli.add_command(setup)
