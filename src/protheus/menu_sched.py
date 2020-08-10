@@ -4,8 +4,6 @@ import schedule
 
 from menu_service import Service
 from common import log
-# from menu_cloud import Cloud
-# from ipbot import bot_protheus
 
 
 class Scheduler:
@@ -21,7 +19,7 @@ class Scheduler:
         if repeat == 'workingdays' or repeat == 'working-days' or repeat == 'diasuteis' or repeat == 'dias-uteis':
             return ['monday', 'tuesday', 'wednesday', 'thursday', 'friday']
         elif repeat in ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']:
-            return repeat
+            return [repeat]
         elif repeat == 'daily' or repeat == 'diariamente':
             return ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
         elif repeat == 'weekend' or repeat == 'finaldesemana':
