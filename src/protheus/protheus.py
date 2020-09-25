@@ -10,7 +10,7 @@ from menu_setup import Setup
 from menu_service import Service
 from menu_cloud import Cloud
 from menu_sched import Scheduler
-from common import log
+from common import log, get_settings
 from ipfiles import Files
 from ipbot import get_group_id
 
@@ -197,9 +197,12 @@ def start(quiet):
 
             if c == 'oci':
                 oci_config=ipcl.get_oci()
-
                 for config in oci_config:
                     ipcl.oci(ip=config.get('ip'), job='startinstance')
+            elif c == 'aws':
+                aws_config=ipcl.get_aws()
+                for config in aws_config:
+                    ipcl.aws(ip=config.get('ip'), job='startinstance')
             else:
                 log(f'Sorry, {c.upper()} not yet supported!')
 
@@ -209,6 +212,10 @@ def start(quiet):
                     oci_config=ipcl.get_oci()
                     for config in oci_config:
                         ipcl.oci(ip=config.get('ip'), job='startinstance')
+                elif c == 'aws':
+                    aws_config=ipcl.get_aws()
+                    for config in aws_config:
+                        ipcl.aws(ip=config.get('ip'), job='startinstance')
                 else:
                     log(f'Sorry, {c.upper()} not yet supported!')
 
@@ -248,9 +255,14 @@ def get():
 
     for c in clouds:
         if c == 'oci':
-            oci_config=ipcl.get_oci()
-            for config in oci_config:
+            oci_config = get_settings('oci')
+            for config in oci_config[1]:
                 ipcl.oci(ip=config.get('ip'), job='')
+        # elif c == 'aws':
+        #   from ipaws import Aws  
+            # aws_config = get_settings('aws')
+            # for config in aws_config[1]:
+            #     ipcl.aws(ip=config.get('ip'), job='')
         else:
             log(f'Sorry, {c.upper()} not yet supported!')
 

@@ -1,8 +1,10 @@
 import json
 from common import log
 from ipoci import Oci
+from ipaws import Aws
 
 oci = object.__new__(Oci)
+aws = object.__new__(Aws)
 
 
 class Cloud:
@@ -33,8 +35,41 @@ class Cloud:
         for c in clouds:
             if c == 'oci':
                 self.oci(**kwargs)
+            elif c == 'aws':
+                self.aws(**kwargs)
             else:
                 log(f'Sorry, {c.upper()} not yet supported!')
+        return
+
+    def aws(self, **kwargs):
+
+        job = kwargs.get('job', None)
+        ip = kwargs.get('ip')
+
+        configs = aws.get_config()
+
+        for inst_conf in configs:
+            if ip in inst_conf['ip']:
+                iid = inst_conf.get('id', None)
+
+                if iid is None:
+                    # exception
+                    log(f'AWS ID não configurado para o IP {ip}, por favor verificar as configurações no settings.json', 'ERROR')
+                    return
+
+                if job == 'stopinstance':
+                    log(f'Iniciou o processo {job.upper()} do servidor {ip}', 'INFO', True)
+                    aws.instance_aws(iid, 'STOP')
+                    return
+                elif job == 'startinstance':
+                    log(f'Iniciou o processo {job.upper()} do servidor {ip}', 'INFO', True)
+                    aws.instance_aws(iid, 'START')
+                    return
+                else:
+                    log(f'Iniciou o processo {job.upper()} do servidor {ip}', 'INFO')
+                    aws.instance_aws(iid, 'GET')
+                    return
+        log('ID da instânce não encontrado!', 'WARN')
         return
 
     def oci(self, **kwargs):
