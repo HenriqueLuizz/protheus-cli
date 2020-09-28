@@ -64,8 +64,16 @@ def get_group_id():
 
     data = response.json()
 
+    if not data['ok']:
+        print(data['description'])
+        return []
+
     for d in data['result']:
-        id_chat = d['message']['chat']['id']
+        try:
+            id_chat = d['message']['chat']['id']
+        except KeyError:
+            id_chat = d['edited_message']['chat']['id']
+
         if id_chat in chats:
             continue
 
