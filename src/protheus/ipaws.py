@@ -111,7 +111,7 @@ class Aws:
 
     def instance_aws(self, iid: str, action='get'):
 
-        log(f'AWS operation *{action}* running.', 'INFO', send=True)
+        log(f'AWS operation *{action}* running.', 'INFO')
 
         if action.lower() == 'start':
             data = run(f'aws ec2 start-instances --instance-ids {iid}')
@@ -121,6 +121,6 @@ class Aws:
             self.result_aws(d=data, send_msg=True, action=action)
         else:
             data = run(f'aws ec2 describe-instances --instance-ids {iid}')
-            self.result_aws(d=data)
+            self.result_aws(d=data, send_msg=True)
 
-        log(f'AWS operation *{action}* finished.', 'INFO', send=True)
+        log(f'AWS operation *{action}* finished.', 'INFO')
