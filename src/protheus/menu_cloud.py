@@ -50,7 +50,7 @@ class Cloud:
 
         for inst_conf in configs:
             if ip in inst_conf['ip']:
-                iid = inst_conf.get('id', None)
+                iid = inst_conf.get('iid', None)
 
                 if iid is None:
                     # exception
@@ -58,15 +58,19 @@ class Cloud:
                     return
 
                 if job == 'stopinstance':
-                    log(f'Iniciou o processo {job.upper()} do servidor {ip}', 'INFO', True)
+                    log(u'\U0001F5E3' + f'Iniciou o processo *{job.upper()}* do servidor *{ip}*', 'INFO', True)
                     aws.instance_aws(iid, 'STOP')
                     return
                 elif job == 'startinstance':
-                    log(f'Iniciou o processo {job.upper()} do servidor {ip}', 'INFO', True)
+                    log(u'\U0001F5E3' + f'Iniciou o processo *{job.upper()}* do servidor *{ip}*', 'INFO', True)
                     aws.instance_aws(iid, 'START')
                     return
+                elif job == 'validate':
+                    log(u'\U0001F5E3' + f'Iniciou o processo *{job.upper()}*', 'INFO', send=True)
+                    aws.check_aws()
+                    return
                 else:
-                    log(f'Iniciou o processo {job.upper()} do servidor {ip}', 'INFO')
+                    log(u'\U0001F5E3' + f'Iniciou o processo *{job.upper()}* do servidor *{ip}*', 'INFO')
                     aws.instance_aws(iid, 'GET')
                     return
         log('ID da instânce não encontrado!', 'WARN')
@@ -111,7 +115,8 @@ class Cloud:
 
             for iid in iids:
                 log(f'OCID {iid} adicionado.')
-                conf['oci'].append(iid)
+                conf_add = {"ocid": iid, "ip": "", "name": "SERVER", "enableservice": "00:00", "disableservice": "00:00", "startinstance": "00:00", "stopinstance": "00:00", "repeat": "workingdays"}
+                conf['oci'].append(conf_add)
 
         with open('settings.json', 'w') as json_read:
             json.dump(conf, json_read, indent=4)

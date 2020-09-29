@@ -37,17 +37,18 @@ def run(command: str):
     return data
 
 
-def log(msg, status='INFO', send=False):
+def log(msg, status='INFO', send=False, logfile='protheus-cli.log'):
     now = datetime.now()
     now = now.strftime('%d/%m/%Y %H:%M')
 
     print(f'[{now}] [{status}] {msg}')
 
-    with open('protheus-cli.log', 'a+', encoding='utf-8') as log_file:
+    with open(logfile, 'a+', encoding='utf-8') as log_file:
         log_file.write(f'[{now}] [{status}] {msg}\n')
 
     if status != 'INFO':
-        bot_protheus('Algo estranho está acontecendo lá no servidor. Olha isso!')
+
+        bot_protheus(u'\U0001F300' + 'Algo estranho está acontecendo lá no servidor. Olha isso!')
         bot_protheus(msg)
 
     if send:
@@ -61,3 +62,34 @@ def get_settings(key):
             return [True, data[key]]
         else:
             return [False]
+
+
+def set_settings(key, value, subkey='', search=''):
+    configs = {}
+
+    with open('settings.json') as json_file:
+        configs = json.load(json_file)
+
+        if key in configs:
+
+            if type(configs[key]) == list:
+
+                for idx, config in enumerate(configs[key]):
+
+                    if subkey in config:
+
+                        if search != '' and search == configs[key][idx][subkey]:
+                            configs[key][idx][subkey] = value
+
+                    else:
+                        configs[key][idx] = value
+
+            elif subkey in configs[key]:
+                configs[key][subkey] = value
+            else:
+                configs[key] = value
+
+        with open('settings.json', 'w') as json_read:
+            json.dump(configs, json_read, indent=4)
+
+        return configs

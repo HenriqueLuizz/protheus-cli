@@ -1,4 +1,3 @@
-# import time
 import json
 import schedule
 
@@ -95,6 +94,7 @@ class Scheduler:
         kw_job: str = kwargs.get('job', None)
         kw_jobtime: str = kwargs.get('jobtime', None)
         kw_repeat: str = kwargs.get('repeat', None)
+        kw_cloud: str = kwargs.get('cloud', '')
 
         if kw_jobtime is None:
             global_time = True
@@ -107,7 +107,7 @@ class Scheduler:
         if hour == '00:00':
             return
 
-        log(f'Agendamento de {kw_job.upper()} para o {kw_name.upper()} ({kw_ip}) às {hour} | {repeat} ', 'INFO', True)
+        log(f'*{kw_cloud.upper()}* Agendamento de *{kw_job.upper()}* para o *{kw_name.upper()}* ({kw_ip}) às *{hour}* | *{repeat.upper()}* ', 'INFO', True)
 
         if len(list_repeat) > 0:
             for day in list_repeat:

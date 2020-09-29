@@ -20,7 +20,6 @@ ipcl = object.__new__(Cloud)
 ipsch = object.__new__(Scheduler)
 ipfile = object.__new__(Files)
 
-
 ipset.load()
 ipsch.load()
 
@@ -188,7 +187,9 @@ def list_service():
 @instance.command('start', short_help='Inicia todas as instâncias. \n\n--quiet (quiet mode)', help="Inicia todas as instâncias configuradas no SETTINGS.JSON, envia um sinal de START para cada instância", epilog='')
 @click.option('--quiet', '-q', is_flag=True, default=False, help='modo sem interação, o sinal de START será enviado sem solicitar confirmação')
 def start(quiet):
+
     clouds=ipcl.identifyCloud()
+    instances_settings = get_settings(clouds[0])
 
     for c in clouds:
         if quiet:
@@ -200,8 +201,7 @@ def start(quiet):
                 for config in oci_config:
                     ipcl.oci(ip=config.get('ip'), job='startinstance')
             elif c == 'aws':
-                aws_config=ipcl.get_aws()
-                for config in aws_config:
+                for config in instances_settings[1]:
                     ipcl.aws(ip=config.get('ip'), job='startinstance')
             else:
                 log(f'Sorry, {c.upper()} not yet supported!')
@@ -213,8 +213,7 @@ def start(quiet):
                     for config in oci_config:
                         ipcl.oci(ip=config.get('ip'), job='startinstance')
                 elif c == 'aws':
-                    aws_config=ipcl.get_aws()
-                    for config in aws_config:
+                    for config in instances_settings[1]:
                         ipcl.aws(ip=config.get('ip'), job='startinstance')
                 else:
                     log(f'Sorry, {c.upper()} not yet supported!')
@@ -225,6 +224,7 @@ def start(quiet):
 def stop(quiet):
 
     clouds=ipcl.identifyCloud()
+    instances_settings = get_settings(clouds[0])
 
     for c in clouds:
         if quiet:
@@ -235,6 +235,9 @@ def stop(quiet):
                 oci_config=ipcl.get_oci()
                 for config in oci_config:
                     ipcl.oci(ip=config.get('ip'), job='stopinstance')
+            elif c == 'aws':
+                for config in instances_settings[1]:
+                    ipcl.aws(ip=config.get('ip'), job='stopinstance')
             else:
                 log(f'Sorry, {c.upper()} not yet supported!')
 
@@ -244,25 +247,42 @@ def stop(quiet):
                     oci_config=ipcl.get_oci()
                     for config in oci_config:
                         ipcl.oci(ip=config.get('ip'), job='stopinstance')
+                elif c == 'aws':
+                    for config in instances_settings[1]:
+                        ipcl.aws(ip=config.get('ip'), job='stopinstance')
                 else:
                     log(f'Sorry, {c.upper()} not yet supported!')
+
+
+@instance.command('validate', short_help='Verifica o estado de todas instâncias e atualiza o IP no arquivo de configurações', help="verifica o estado de todas as instâncias configuradas no SETTINGS.JSON", epilog='')
+def validate():
+
+    clouds=ipcl.identifyCloud()
+    instances_settings = get_settings(clouds[0])
+
+    for c in clouds:
+        if c == 'oci':
+            for config in instances_settings[1]:
+                ipcl.oci(ip=config.get('ip'), job='')
+        elif c == 'aws':
+            ipcl.aws(ip='', job='validate')
+        else:
+            log(f'Sorry, {c.upper()} not yet supported!')
 
 
 @instance.command('get', short_help='Verifica o estado de todas instâncias', help="verifica o estado de todas as instâncias configuradas no SETTINGS.JSON", epilog='')
 def get():
 
     clouds=ipcl.identifyCloud()
+    instances_settings = get_settings(clouds[0])
 
     for c in clouds:
         if c == 'oci':
-            oci_config = get_settings('oci')
-            for config in oci_config[1]:
+            for config in instances_settings[1]:
                 ipcl.oci(ip=config.get('ip'), job='')
-        # elif c == 'aws':
-        #   from ipaws import Aws  
-            # aws_config = get_settings('aws')
-            # for config in aws_config[1]:
-            #     ipcl.aws(ip=config.get('ip'), job='')
+        elif c == 'aws':
+            for config in instances_settings[1]:
+                ipcl.aws(ip=config.get('ip'), job='')
         else:
             log(f'Sorry, {c.upper()} not yet supported!')
 
@@ -438,21 +458,24 @@ def run(**kwargs):
 
     click.echo('Thread do agendador iniciado!')
 
+    clouds=ipcl.identifyCloud()
+    settings = get_settings(clouds[0])
+
+    if settings[0]:
+        print(settings[1])
+        jobs=['enableservice', 'disableservice', 'startinstance', 'stopinstance']
+
+        for job in jobs:
+
+            for i in range(len(settings[1])):
+                jobtime=settings[1][i].get(job, None)
+                repeat=settings[1][i].get('repeat', None)
+                ip=settings[1][i].get('ip', None)
+                name=settings[1][i].get('name', None)
+
+                ipsch.set_schedule(ipserv, ip=ip, name=name, job=job, jobtime=jobtime, repeat=repeat, cloud=clouds[0])
+
     # TO DO : Executar uma verificação na cloud e validar as configurações
-
-    oci_list=ipcl.get_oci()
-    # jobs=['enableservice']
-    jobs=['enableservice', 'disableservice', 'startinstance', 'stopinstance']
-
-    for job in jobs:
-
-        for i in range(len(oci_list)):
-            oci_jobtime=oci_list[i].get(job, None)
-            oci_repeat=oci_list[i].get('repeat', None)
-            oci_ip=oci_list[i].get('ip', None)
-            oci_name=oci_list[i].get('name', None)
-
-            ipsch.set_schedule(ipserv, ip=oci_ip, name=oci_name, job=job, jobtime=oci_jobtime, repeat=oci_repeat)
 
     while True:
         try:
@@ -505,6 +528,7 @@ service.add_command(list_service)
 instance.add_command(start)
 instance.add_command(stop)
 instance.add_command(get)
+instance.add_command(validate)
 # instance.add_command(add)
 # instance.add_command(remove)
 

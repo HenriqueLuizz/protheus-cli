@@ -138,9 +138,6 @@ class Setup:
             "conns": [],
             "alwaysup": [],
             "alwaysdown": [],
-            "rpo_name": "",
-            "rpo_master": "",
-            "rpo_slave": [],
             "bot": {
                 "bot_token": "",
                 "bot_chatid": ""}}
