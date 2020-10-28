@@ -34,8 +34,6 @@ def run(command: str):
     else:
         return {"status": False, "result": data.stderr.decode()}
 
-    return data
-
 
 def log(msg, status='INFO', send=False, logfile='protheus-cli.log'):
     now = datetime.now()
@@ -84,7 +82,7 @@ def set_settings(key, value, subkey='', search=''):
                     else:
                         configs[key][idx] = value
 
-            elif subkey in configs[key]:
+            elif subkey != '' and subkey in configs[key]:
                 configs[key][subkey] = value
             else:
                 configs[key] = value

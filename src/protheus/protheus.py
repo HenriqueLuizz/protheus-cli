@@ -456,13 +456,13 @@ def run(**kwargs):
         # by_instance=kwargs.get('by_instance')
         pass
 
-    click.echo('Thread do agendador iniciado!')
+    log('Warm-Up Beta - Scheduler Started - Build 0.0.5.1 - Oct 27 2020', 'INFO')
+    log('%23SchedulerStarted', 'INFO', send=True)
 
     clouds=ipcl.identifyCloud()
     settings = get_settings(clouds[0])
 
     if settings[0]:
-        print(settings[1])
         jobs=['enableservice', 'disableservice', 'startinstance', 'stopinstance']
 
         for job in jobs:

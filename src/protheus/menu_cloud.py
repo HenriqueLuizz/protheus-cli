@@ -54,7 +54,7 @@ class Cloud:
 
                 if iid is None:
                     # exception
-                    log(f'AWS ID não configurado para o IP {ip}, por favor verificar as configurações no settings.json', 'ERROR')
+                    log(f'AWS ID não configurado para o IP *{ip}*, por favor verificar as configurações no settings.json', 'ERROR')
                     return
 
                 if job == 'stopinstance':
@@ -89,19 +89,19 @@ class Cloud:
 
                 if iid is None:
                     # exception
-                    log(f'OCID não configurado para o IP {ip}, por favor verificar as configurações no settings.json', 'ERROR')
+                    log(f'OCID não configurado para o IP *{ip}*, por favor verificar as configurações no settings.json', 'ERROR')
                     return
 
                 if job == 'stopinstance':
-                    log(f'Iniciou o processo {job.upper()} do servidor {ip}', 'INFO', True)
+                    log(u'\U0001F5E3' + f'Iniciou o processo *{job.upper()}* do servidor *{ip}*', 'INFO', True)
                     oci.instance_oci(iid, 'STOP')
                     return
                 elif job == 'startinstance':
-                    log(f'Iniciou o processo {job.upper()} do servidor {ip}', 'INFO', True)
+                    log(u'\U0001F5E3' + f'Iniciou o processo *{job.upper()}* do servidor *{ip}*', 'INFO', True)
                     oci.instance_oci(iid, 'START')
                     return
                 else:
-                    log(f'Iniciou o processo {job.upper()} do servidor {ip}', 'INFO')
+                    log(u'\U0001F5E3' + f'Iniciou o processo *{job.upper()}* do servidor *{ip}*', 'INFO')
                     oci.instance_oci(iid, 'GET')
                     return
         log('ID da instânce não encontrado!', 'WARN')

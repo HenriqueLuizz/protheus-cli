@@ -68,14 +68,13 @@ class Oci:
             if 'data' in o:
                 name = o['data']['display-name']
                 lifecycle = o['data']['lifecycle-state']
-                log(f'Instância {name} - {lifecycle}', 'INFO', True)
+                log(f'Instância *{name}* - *{lifecycle}*', 'INFO', True)
 
                 if send_msg and action.lower() != 'get':
-                    bot_protheus(f'Opa.. tudo bem!? \nAcabei de dar um ** {action.upper()} ** nas instâncias ** {name} ** da OCI. \n\nAgora ela está ** {lifecycle} **!!')
-
+                    log(u'\U0001F468\u200D\U0001F4BB'+ f' Acabei de dar um *{action.upper()}* nas instâncias *{name}* da OCI. \n\n' + u'\U0001F5A5' + f' Agora ela está *{lifecycle}* !!', 'INFO', send=send_msg)
                 return True
         else:
-            log('Falha ao realizar a conexão com o OCI \n' + d['result'], 'ERROR')
+            log(u'\U0001F525' + 'Falha ao realizar a conexão com o OCI \n' + d['result'], 'ERROR')
             return False
 
     def check_oci(self, iids: list) -> bool:
@@ -86,13 +85,13 @@ class Oci:
                 self.result_oci(data)
                 return True
             else:
-                log('Falha ao realizar a conexão com o OCI \n' + data['result'], 'ERROR')
+                log(u'\U0001F525' + ' Falha ao realizar a conexão com o OCI \n' + data['result'], 'ERROR')
                 return False
             break
 
     def instance_oci(self, iid: str, action='get'):
 
-        log(f'OCI operation {action} running.', 'INFO')
+        log(f'OCI operation *{action}* running.', 'INFO')
 
         if action.lower() == 'start':
 
@@ -107,4 +106,4 @@ class Oci:
             data = run(f'oci compute instance get --instance-id {iid}')
             self.result_oci(data)
 
-        log(f'OCI operation {action} finished.', 'INFO')
+        log(f'OCI operation *{action}* finished.', 'INFO')
