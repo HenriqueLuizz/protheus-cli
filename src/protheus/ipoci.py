@@ -89,21 +89,21 @@ class Oci:
                 return False
             break
 
-    def instance_oci(self, iid: str, action='get'):
+    def instance_oci(self, iid: str, region:str, action='get') -> bool:
 
         log(f'OCI operation *{action}* running.', 'INFO')
 
         if action.lower() == 'start':
 
-            data = run(f'oci compute instance action --instance-id {iid} --action START')
+            data = run(f'oci compute instance action --region {region} --instance-id {iid} --action START')
             self.result_oci(data, True, action)
 
         elif action.lower() == 'stop':
 
-            data = run(f'oci compute instance action --instance-id {iid} --action SOFTSTOP')
+            data = run(f'oci compute instance action --region {region} --instance-id {iid} --action SOFTSTOP')
             self.result_oci(data, True, action)
         else:
-            data = run(f'oci compute instance get --instance-id {iid}')
+            data = run(f'oci compute instance get --region {region} --instance-id {iid}')
             self.result_oci(data)
 
         log(f'OCI operation *{action}* finished.', 'INFO')

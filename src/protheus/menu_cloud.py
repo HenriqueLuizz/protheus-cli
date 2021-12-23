@@ -86,6 +86,7 @@ class Cloud:
         for inst_conf in configs:
             if ip in inst_conf['ip']:
                 iid = inst_conf.get('ocid', None)
+                region = inst_conf.get('region', None)
 
                 if iid is None:
                     # exception
@@ -94,15 +95,15 @@ class Cloud:
 
                 if job == 'stopinstance':
                     log(u'\U0001F5E3' + f'Iniciou o processo *{job.upper()}* do servidor *{ip}*', 'INFO', True)
-                    oci.instance_oci(iid, 'STOP')
+                    oci.instance_oci(iid, region, 'STOP')
                     return
                 elif job == 'startinstance':
                     log(u'\U0001F5E3' + f'Iniciou o processo *{job.upper()}* do servidor *{ip}*', 'INFO', True)
-                    oci.instance_oci(iid, 'START')
+                    oci.instance_oci(iid, region, 'START')
                     return
                 else:
                     log(u'\U0001F5E3' + f'Iniciou o processo *{job.upper()}* do servidor *{ip}*', 'INFO')
-                    oci.instance_oci(iid, 'GET')
+                    oci.instance_oci(iid, region, 'GET')
                     return
         log('ID da instânce não encontrado!', 'WARN')
         return
