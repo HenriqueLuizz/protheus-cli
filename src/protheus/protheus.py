@@ -484,8 +484,8 @@ def run(**kwargs):
         except KeyboardInterrupt:
             log('Agendamento abortado pelo usuário!', 'WARN')
             break
-        except Exception:
-            log('Processo do agendamento foi interrompido inesperadamente!', 'WARN')
+        except Exception as e:
+            log(f'Processo do agendamento foi interrompido inesperadamente! \n -> {e}', 'WARN')
             break
 
 

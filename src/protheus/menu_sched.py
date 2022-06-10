@@ -15,9 +15,19 @@ class Scheduler:
         self.repeat = repeat
 
     def weekdays(self, repeat=None) -> list:
+        daysofweek = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',
+        'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sabado', 'domingo']
+        list_repeat = repeat.split(',')
+
+        for x in list_repeat:
+            if x.strip() not in daysofweek:
+                list_repeat.remove(x)
+        if len(list_repeat) > 0:
+            return list_repeat
+
         if repeat == 'workingdays' or repeat == 'working-days' or repeat == 'diasuteis' or repeat == 'dias-uteis':
             return ['monday', 'tuesday', 'wednesday', 'thursday', 'friday']
-        elif repeat in ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']:
+        elif repeat in daysofweek:
             return [repeat]
         elif repeat == 'daily' or repeat == 'diariamente':
             return ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
